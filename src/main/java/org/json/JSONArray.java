@@ -196,15 +196,16 @@ public class JSONArray implements Iterable<Object> {
     /**
      * Construct a JSONArray from another JSONArray. This is a shallow copy.
      *
-     * @param collection
-     *            A Collection.
+     * @param array
+     *            A array.
      */
     public JSONArray(JSONArray array) {
         if (array == null) {
             this.myArrayList = new ArrayList<Object>();
         } else {
-            this.myArrayList = new ArrayList<Object>(array.length());
-            this.addAll(array.myArrayList);
+            // shallow copy directly the internal array lists as any wrapping
+            // should have been done already in the original JSONArray
+            this.myArrayList = new ArrayList<Object>(array.myArrayList);
         }
     }
 
@@ -1214,7 +1215,7 @@ public class JSONArray implements Iterable<Object> {
      * Put an Iterable's elements in to the JSONArray.
      *
      * @param iter
-     *            A Collection.
+     *            An Iterable.
      * @return this. 
      */
     public JSONArray putAll(Iterable<?> iter) {
@@ -1230,7 +1231,9 @@ public class JSONArray implements Iterable<Object> {
      * @return this. 
      */
     public JSONArray putAll(JSONArray array) {
-        this.addAll(array.myArrayList);
+        // directly copy the elements from the source array to this one
+        // as all wrapping should have been done already in the source.
+        this.myArrayList.addAll(array.myArrayList);
         return this;
     }
 
@@ -1607,8 +1610,9 @@ public class JSONArray implements Iterable<Object> {
      * Add an array's elements to the JSONArray.
      *
      * @param array
-     *            Array. If the parameter passed is null, or not an array, an
-     *            exception will be thrown.
+     *            Array. If the parameter passed is null, or not an array,
+     *            JSONArray, Collection, or Iterable, an exception will be
+     *            thrown.
      *
      * @throws JSONException
      *            If not an array or if an array value is non-finite number.
@@ -1623,7 +1627,10 @@ public class JSONArray implements Iterable<Object> {
                 this.put(JSONObject.wrap(Array.get(array, i)));
             }
         } else if (array instanceof JSONArray) {
-            this.addAll(((JSONArray)array).myArrayList);
+            // use the built in array list `addAll` as all object
+            // wrapping should have been completed in the original
+            // JSONArray
+            this.myArrayList.addAll(((JSONArray)array).myArrayList);
         } else if (array instanceof Collection) {
             this.addAll((Collection<?>)array);
         } else if (array instanceof Iterable) {
