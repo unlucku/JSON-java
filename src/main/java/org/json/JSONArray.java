@@ -549,7 +549,7 @@ public class JSONArray implements Iterable<Object> {
      * The JSONArray will be empty after this call returns.
      */
     public void clear() {
-        return this.map.clear();
+        return this.myArrayList.clear();
     }
 
     /**
