@@ -213,7 +213,6 @@ public class JSONObject {
      *             If there is a syntax error in the source string or a
      *             duplicated key.
      */
-    public JSONObject(JSONTokener x) throws JSONException {
         this();
         char c;
         String key;
@@ -249,7 +248,6 @@ public class JSONObject {
                     throw x.syntaxError("Duplicate key \"" + key + "\"");
                 }
                 // Only add value if non-null
-                Object value = x.nextValue();
                 if (value!=null) {
                     this.put(key, value);
                 }
@@ -819,7 +817,7 @@ public class JSONObject {
         if (jo.isEmpty()) {
             return null;
         }
-        return jo.keySet().toArray(new String[jo.length()]);
+        return jo.keySet().toArray(new String[jo.size()]);
     }
 
     /**
@@ -969,7 +967,7 @@ public class JSONObject {
      *
      * @return The number of keys in the JSONObject.
      */
-    public int length() {
+    public int size() {
         return this.map.size();
     }
 
@@ -2498,7 +2496,7 @@ public class JSONObject {
             throws JSONException {
         try {
             boolean needsComma = false;
-            final int length = this.length();
+            final int length = this.size();
             writer.write('{');
 
             if (length == 1) {
