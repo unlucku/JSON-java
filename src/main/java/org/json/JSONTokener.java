@@ -410,15 +410,37 @@ public class JSONTokener {
         }
     }
 
+    public Object clearValues(int depth) throws JSONException {
+        // get rid of it
 
+
+
+        return null
+    }
     /**
-     * Get the next value. The value can be a Boolean, Double, Integer,
-     * JSONArray, JSONObject, Long, or String, or the JSONObject.NULL object.
-     * @throws JSONException If syntax error.
+     * Get the next key. The value has to be a string
      *
      * @return An object.
      */
-    public Object nextValue() throws JSONException {
+    public String nextKey(int depth) throws JSONException {
+        char c = this.nextClean();
+        String string;
+
+        StringBuilder sb = new StringBuilder();
+        while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
+            sb.append(c);
+            c = this.next();
+        }
+        if (!this.eof) {
+            this.back();
+        }
+
+        string = sb.toString().trim();
+        }
+        return string;
+    }
+
+    public Object nextValue(int depth) throws JSONException {
         char c = this.nextClean();
         String string;
 
@@ -428,7 +450,7 @@ public class JSONTokener {
             return this.nextString(c);
         case '{':
             this.back();
-            return new JSONObject(this);
+            return (depth==0 ? clearValues() : new JSONObject(this);
         case '[':
             this.back();
             return new JSONArray(this);
@@ -458,7 +480,6 @@ public class JSONTokener {
         }
         return JSONObject.stringToValue(string);
     }
-
 
     /**
      * Skip characters until the next character is the requested character.

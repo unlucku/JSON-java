@@ -213,6 +213,7 @@ public class JSONObject {
      *             If there is a syntax error in the source string or a
      *             duplicated key.
      */
+    public JSONObject(JSONTokener x) throws JSONException {
         this();
         char c;
         String key;
