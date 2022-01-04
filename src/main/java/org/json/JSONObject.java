@@ -230,7 +230,7 @@ public class JSONObject {
                 return;
             default:
                 x.back();
-                key = x.nextValue().toString();
+                key = x.nextKey()
             }
 
             // The key is followed by ':'.
@@ -249,6 +249,7 @@ public class JSONObject {
                     throw x.syntaxError("Duplicate key \"" + key + "\"");
                 }
                 // Only add value if non-null
+				 Object value = x.nextValue();
                 if (value!=null) {
                     this.put(key, value);
                 }

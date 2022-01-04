@@ -410,19 +410,51 @@ public class JSONTokener {
         }
     }
 
-    public Object clearValues(int depth) throws JSONException {
-        // get rid of it
+    public Object clearValues() throws JSONException {
+        char c = this.nextClean();;
 
+        for (;;) {
+            c = nextClean();
+            switch (c) {
+            case 0:
+                throw syntaxError("A JSONObject text must end with '}'");
+            case '}':
+                return JSONObject.NULL;
+            default:
+                back();
+                key = nextKey()
+            }
+            c = nextClean();
+            if (c != ':') {
+                throw syntaxError("Expected a ':' after a key");
+            }
+            nextValue(0);
 
+            // Pairs are separated by ','.
 
-        return null
+            switch (nextClean()) {
+            case ';':
+            case ',':
+                if (nextClean() == '}') {
+                    return JSONObject.NULL;
+                }
+                back();
+                break;
+            case '}':
+                return JSONObject.NULL;
+            default:
+                throw syntaxError("Expected a ',' or '}'");
+            }
+        }
+
+        return JSONObject.NULL;
     }
     /**
      * Get the next key. The value has to be a string
      *
      * @return An object.
      */
-    public String nextKey(int depth) throws JSONException {
+    public String nextKey() throws JSONException {
         char c = this.nextClean();
         String string;
 
@@ -431,16 +463,17 @@ public class JSONTokener {
             sb.append(c);
             c = this.next();
         }
-        if (!this.eof) {
-            this.back();
-        }
 
         string = sb.toString().trim();
+        if (string.length()==0) {
+            throw this.syntaxError("Missing value");
         }
         return string;
     }
-
-    public Object nextValue(int depth) throws JSONException {
+    public Object nextValue() throws JSONException {
+        return nextValue(-1)
+    }
+    private Object nextValue(int depth) throws JSONException {
         char c = this.nextClean();
         String string;
 
@@ -450,10 +483,10 @@ public class JSONTokener {
             return this.nextString(c);
         case '{':
             this.back();
-            return (depth==0 ? clearValues() : new JSONObject(this);
+            return (depth==0 ? clearValues() : new JSONObject(this));
         case '[':
             this.back();
-            return new JSONArray(this);
+            return (depth==0 ? clearValues() : new JSONArray(this));
         }
 
         /*
