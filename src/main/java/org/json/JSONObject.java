@@ -187,6 +187,14 @@ public class JSONObject {
         this.map = new HashMap<String, Object>();
     }
 
+     /**
+     * Construct an empty JSONObject.
+     * @param preserveOrder Constructor to preserve order of JSONObject entries
+     */
+     public JSONObject(boolean preserveOrder) {
+        // Alternative to hashmap to make sure elements are ordered
+        this.map = new LinkedHashMap<String, Object>();
+    }
     /**
      * Construct a JSONObject from a subset of another JSONObject. An array of
      * strings is used to identify the keys that should be copied. Missing keys
