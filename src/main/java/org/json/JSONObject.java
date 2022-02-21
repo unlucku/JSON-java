@@ -27,7 +27,6 @@ import java.io.Closeable;
  */
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -1956,15 +1955,7 @@ public class JSONObject {
 	 * @return A String correctly formatted for insertion in a JSON text.
 	 */
 	public static String quote(String string) {
-		StringWriter sw = new StringWriter();
-		synchronized (sw.getBuffer()) {
-			try {
-				return quote(string, sw).toString();
-			} catch (IOException ignored) {
-				// will never happen - we are writing to a string writer
-				return "";
-			}
-		}
+		return quote(string, new StringBuilder()).toString();
 	}
 
 	public static Writer quote(String string, Writer w) throws IOException {
@@ -2025,7 +2016,64 @@ public class JSONObject {
 		w.write('"');
 		return w;
 	}
+	public static StringBuilder quote(String string, StringBuilder w)  {
+		if (string == null || string.isEmpty()) {
+			w.append("\"\"");
+			return w;
+		}
 
+		char b;
+		char c = 0;
+		String hhhh;
+		int i;
+		int len = string.length();
+
+		w.append('"');
+		for (i = 0; i < len; i += 1) {
+			b = c;
+			c = string.charAt(i);
+			switch (c) {
+				case '\\':
+				case '"':
+					w.append('\\');
+					w.append(c);
+					break;
+				case '/':
+					if (b == '<') {
+						w.append('\\');
+					}
+					w.append(c);
+					break;
+				case '\b':
+					w.append("\\b");
+					break;
+				case '\t':
+					w.append("\\t");
+					break;
+				case '\n':
+					w.append("\\n");
+					break;
+				case '\f':
+					w.append("\\f");
+					break;
+				case '\r':
+					w.append("\\r");
+					break;
+				default:
+					if (c < ' ' || (c >= '\u0080' && c < '\u00a0')
+							|| (c >= '\u2000' && c < '\u2100')) {
+						w.append("\\u");
+						hhhh = Integer.toHexString(c);
+						w.append("0000", 0, 4 - hhhh.length());
+						w.append(hhhh);
+					} else {
+						w.append(c);
+					}
+			}
+		}
+		w.append('"');
+		return w;
+	}
 	/**
 	 * Remove a name and its value, if present.
 	 *
@@ -2311,10 +2359,7 @@ public class JSONObject {
 	 *             If the object contains an invalid number.
 	 */
 	public String toString(int indentFactor) throws JSONException {
-		StringWriter w = new StringWriter();
-		synchronized (w.getBuffer()) {
-			return this.write(w, indentFactor, 0).toString();
-		}
+		return this.write(new StringBuilder(), indentFactor, 0).toString();
 	}
 
 	/**
@@ -2416,8 +2461,7 @@ public class JSONObject {
 		return this.write(writer, 0, 0);
 	}
 
-	static final Writer writeValue(Writer writer, Object value,
-			int indentFactor, int indent) throws JSONException, IOException {
+	static final Writer writeValue(Writer writer, Object value, int indentFactor, int indent) throws JSONException, IOException {
 		if (value == null || value.equals(null)) {
 			writer.write("null");
 		} else if (value instanceof JSONString) {
@@ -2459,13 +2503,58 @@ public class JSONObject {
 		}
 		return writer;
 	}
-
+	static final StringBuilder writeValue(StringBuilder response, Object value, int indentFactor, int indent) throws JSONException {
+		if (value == null || value.equals(null)) {
+			response.append("null");
+		} else if (value instanceof JSONString) {
+			Object o;
+			try {
+				o = ((JSONString) value).toJSONString();
+			} catch (Exception e) {
+				throw new JSONException(e);
+			}
+			response.append(o != null ? o.toString() : quote(value.toString()));
+		} else if (value instanceof Number) {
+			// not all Numbers may match actual JSON Numbers. i.e. fractions or Imaginary
+			final String numberAsString = numberToString((Number) value);
+			if(NUMBER_PATTERN.matcher(numberAsString).matches()) {
+				response.append(numberAsString);
+			} else {
+				// The Number value is not a valid JSON number.
+				// Instead we will quote it as a string
+				quote(numberAsString, response);
+			}
+		} else if (value instanceof Boolean) {
+			response.append(value.toString());
+		} else if (value instanceof Enum<?>) {
+			response.append(quote(((Enum<?>)value).name()));
+		} else if (value instanceof JSONObject) {
+			((JSONObject) value).write(response, indentFactor, indent);
+		} else if (value instanceof JSONArray) {
+			((JSONArray) value).write(response, indentFactor, indent);
+		} else if (value instanceof Map) {
+			Map<?, ?> map = (Map<?, ?>) value;
+			new JSONObject(map).write(response, indentFactor, indent);
+		} else if (value instanceof Collection) {
+			Collection<?> coll = (Collection<?>) value;
+			new JSONArray(coll).write(response, indentFactor, indent);
+		} else if (value.getClass().isArray()) {
+			new JSONArray(value).write(response, indentFactor, indent);
+		} else {
+			quote(value.toString(), response);
+		}
+		return response;
+	}
 	static final void indent(Writer writer, int indent) throws IOException {
 		for (int i = 0; i < indent; i += 1) {
 			writer.write(' ');
 		}
 	}
-
+	static final void indent(StringBuilder response, int indent) {
+		for (int i = 0; i < indent; i += 1) {
+			response.append(' ');
+		}
+	}
 	/**
 	 * Write the contents of the JSONObject as JSON text to a writer.
 	 * 
@@ -2546,6 +2635,57 @@ public class JSONObject {
 		} catch (IOException exception) {
 			throw new JSONException(exception);
 		}
+	}
+
+
+	public StringBuilder write(StringBuilder response, int indentFactor, int indent) throws JSONException {
+		boolean needsComma = false;
+		final int length = this.length();
+		response.append('{');
+
+		if (length == 1) {
+			final Entry<String,?> entry = this.entrySet().iterator().next();
+			final String key = entry.getKey();
+			response.append(quote(key));
+			response.append(':');
+			if (indentFactor > 0) {
+				response.append(' ');
+			}
+			try{
+				writeValue(response, entry.getValue(), indentFactor, indent);
+			} catch (Exception e) {
+				throw new JSONException("Unable to write JSONObject value for key: " + key, e);
+			}
+		} else if (length != 0) {
+			final int newIndent = indent + indentFactor;
+			for (final Entry<String,?> entry : this.entrySet()) {
+				if (needsComma) {
+					response.append(',');
+				}
+				if (indentFactor > 0) {
+					response.append('\n');
+				}
+				indent(response, newIndent);
+				final String key = entry.getKey();
+				response.append(quote(key));
+				response.append(':');
+				if (indentFactor > 0) {
+					response.append(' ');
+				}
+				try {
+					writeValue(response, entry.getValue(), indentFactor, newIndent);
+				} catch (Exception e) {
+					throw new JSONException("Unable to write JSONObject value for key: " + key, e);
+				}
+				needsComma = true;
+			}
+			if (indentFactor > 0) {
+				response.append('\n');
+			}
+			indent(response, indent);
+		}
+		response.append('}');
+		return response;
 	}
 
 	/**

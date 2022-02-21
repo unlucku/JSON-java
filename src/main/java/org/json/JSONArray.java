@@ -25,7 +25,6 @@ package org.json;
  */
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -1453,11 +1452,51 @@ public class JSONArray implements Iterable<Object> {
 	 *         &nbsp;<small>(right bracket)</small>.
 	 * @throws JSONException if a called function fails
 	 */
-	public String toString(int indentFactor) throws JSONException {
-		StringWriter sw = new StringWriter();
-		synchronized (sw.getBuffer()) {
-			return this.write(sw, indentFactor, 0).toString();
+	public String toString(int indentFactor) {
+		return this.write(new StringBuilder(), indentFactor, 0).toString();
+	}
+
+
+
+
+	public StringBuilder write(StringBuilder response, int indentFactor, int indent) throws JSONException {
+		final int length = this.length();
+		boolean needsComma = false;
+		response.append('[');
+
+		if (length == 1) {
+			try {
+				JSONObject.writeValue(response, this.myArrayList.get(0),
+						indentFactor, indent);
+			} catch (Exception e) {
+				throw new JSONException("Unable to write JSONArray value at index: 0", e);
+			}
+		} else if (length != 0) {
+			final int newIndent = indent + indentFactor;
+
+			for (int i = 0; i < length; i += 1) {
+				if (needsComma) {
+					response.append(',');
+				}
+				if (indentFactor > 0) {
+					response.append('\n');
+				}
+				JSONObject.indent(response, newIndent);
+				try {
+					JSONObject.writeValue(response, this.myArrayList.get(i),
+							indentFactor, newIndent);
+				} catch (Exception e) {
+					throw new JSONException("Unable to write JSONArray value at index: " + i, e);
+				}
+				needsComma = true;
+			}
+			if (indentFactor > 0) {
+				response.append('\n');
+			}
+			JSONObject.indent(response, indent);
 		}
+		response.append(']');
+		return response;
 	}
 
 	/**
