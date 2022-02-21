@@ -238,7 +238,7 @@ public class JSONArray implements Iterable<Object> {
 	public JSONArray(int initialCapacity) throws JSONException {
 		if (initialCapacity < 0) {
 			throw new JSONException(
-					"JSONArray initial value should be a string or collection or array.");
+					"JSONArray initial capacity cannot be negative.");
 		}
 		this.myArrayList = new ArrayList<Object>(initialCapacity);
 
