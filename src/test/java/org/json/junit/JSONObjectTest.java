@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-import org.json.CDL;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -512,26 +512,7 @@ public class JSONObjectTest {
     }
 
 
-    /**
-     * JSONObjects can be built from a Map<String, Object>. 
-     * In this test the map entries are not valid JSON types.
-     * The actual conversion is kind of interesting.
-     */
-    @Test
-    public void jsonObjectByMapWithUnsupportedValues() {
-        Map<String, Object> jsonMap = new HashMap<String, Object>();
-        // Just insert some random objects
-        jsonMap.put("key1", new CDL());
-        jsonMap.put("key2", new Exception());
 
-        JSONObject jsonObject = new JSONObject(jsonMap);
-
-        // validate JSON
-        Object doc = Configuration.defaultConfiguration().jsonProvider().parse(jsonObject.toString());
-        assertTrue("expected 2 top level items", ((Map<?,?>)(JsonPath.read(doc, "$"))).size() == 2);
-        assertTrue("expected 0 key1 items", ((Map<?,?>)(JsonPath.read(doc, "$.key1"))).size() == 0);
-        assertTrue("expected \"key2\":java.lang.Exception","java.lang.Exception".equals(jsonObject.query("/key2")));
-    }
 
     /**
      * JSONObjects can be built from a Map<String, Object>. 
