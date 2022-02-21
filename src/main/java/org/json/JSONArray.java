@@ -241,6 +241,8 @@ public class JSONArray implements Iterable<Object> {
             throw new JSONException(
                     "JSONArray initial value should be a string or collection or array.");
         }
+        this.myArrayList = new ArrayList<Object>(initialCapacity);
+   
     }
 
     @Override
