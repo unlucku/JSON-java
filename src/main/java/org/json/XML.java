@@ -425,7 +425,7 @@ public class XML {
     // To maintain compatibility with the Android API, this method is a direct copy of
     // the one in JSONObject. Changes made here should be reflected there.
     public static Object stringToValue(String string) {
-        if (string.equals("")) {
+        if (string.length() == 0) {
             return string;
         }
         if (string.equalsIgnoreCase("true")) {
