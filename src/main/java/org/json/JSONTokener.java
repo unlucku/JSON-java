@@ -459,7 +459,15 @@ public class JSONTokener {
         return JSONObject.stringToValue(string);
     }
 
-
+	public String nextKey() {
+		  char c = this.nextClean();
+	        switch (c) {
+	        case '"':
+	        case '\'':
+	            return this.nextString(c);
+	        default: throw new JSONException("Key is not a string!");
+	        }
+	}
     /**
      * Skip characters until the next character is the requested character.
      * If the requested character is not found, no characters are skipped.

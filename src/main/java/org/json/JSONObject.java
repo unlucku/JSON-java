@@ -230,7 +230,7 @@ public class JSONObject {
                 return;
             default:
                 x.back();
-                key = x.nextValue().toString();
+                key = x.nextKey();
             }
 
             // The key is followed by ':'.
@@ -272,7 +272,6 @@ public class JSONObject {
             }
         }
     }
-
     /**
      * Construct a JSONObject from a Map.
      *
