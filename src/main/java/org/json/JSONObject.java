@@ -215,11 +215,14 @@ public class JSONObject {
 	 *             duplicated key.
 	 */
 	public JSONObject(JSONTokener x) throws JSONException {
+		this(x, false);
+	}
+	public JSONObject(JSONTokener x, boolean checked) throws JSONException {
 		this();
 		char c;
 		String key;
 
-		if (x.nextClean() != '{') {
+		if (!checked && x.nextClean() != '{') {
 			throw x.syntaxError("A JSONObject text must begin with '{'");
 		}
 		for (;;) {
@@ -230,8 +233,7 @@ public class JSONObject {
 				case '}':
 					return;
 				default:
-					x.back();
-					key = x.nextValue().toString();
+					key = x.nextString(c);
 			}
 
 			// The key is followed by ':'.
@@ -243,19 +245,8 @@ public class JSONObject {
 
 			// Use syntaxError(..) to include error location
 
-			if (key != null) {
-				// Check if key exists
-				if (this.opt(key) != null) {
-					// key already exists
-					throw x.syntaxError("Duplicate key \"" + key + "\"");
-				}
-				// Only add value if non-null
-				Object value = x.nextValue();
-				if (value!=null) {
-					this.put(key, value);
-				}
-			}
 
+			this.putInternal(key, x.nextValue());
 			// Pairs are separated by ','.
 
 			switch (x.nextClean()) {
@@ -400,7 +391,7 @@ public class JSONObject {
 	 *            brace)</small> and ending with <code>}</code>
 	 *            &nbsp;<small>(right brace)</small>.
 	 * @exception JSONException
-	 *                If there is a syntax error in the source string or a
+	 *                If there is a syntax error in the  source string or a
 	 *                duplicated key.
 	 */
 	public JSONObject(String source) throws JSONException {
@@ -1836,7 +1827,18 @@ public class JSONObject {
 		}
 		return this;
 	}
-
+	private JSONObject putInternal(String key, Object value) throws JSONException {
+		if (key == null) {
+			throw new NullPointerException("Null key.");
+		}
+		if (value != null) {
+			testValidity(value);
+			this.map.put(key, value);
+		} else {
+			throw new NullPointerException("Null value.");
+		}
+		return this;
+	}
 	/**
 	 * Put a key/value pair in the JSONObject, but only if the key and the value
 	 * are both non-null, and only if there is not already a member with that
